@@ -61,18 +61,15 @@ The UI is not built *on top of* a neural network. The UI **IS** the neural netwo
 
 ---
 
-## 🖼️ Screenshots
+## 🖼️ Preview
 
-> Click the banner below to visit the live site.
+> Click the image below to visit the live site.
 
-[![Neural Portfolio](https://neural-synaptic-style-port-folio-2i.vercel.app)](https://neural-synaptic-style-port-folio-2i.vercel.app)
+[![Neural Synaptic Portfolio — Live Preview](https://image.thum.io/get/width/1280/crop/800/noanimate/https://neural-synaptic-style-port-folio-2i.vercel.app)](https://neural-synaptic-style-port-folio-2i.vercel.app)
 
-| | |
+| Home — Neural Network Hero | Contact — Signal Complete |
 |---|---|
-| ![Home Page - Neural Network Assembly](./screenshots/home.png) | ![Node Card - HUD Style](./screenshots/node-card.png) |
-| *Hero — entering the Input layer* | *HUD identity card on node click* |
-| ![Projects Layer](./screenshots/projects.png) | ![Contact Page - Signal Complete](./screenshots/contact.png) |
-| *Output layer — shipped projects* | *Bird's-eye full network — Contact* |
+| [![Home](https://image.thum.io/get/width/640/crop/400/noanimate/https://neural-synaptic-style-port-folio-2i.vercel.app)](https://neural-synaptic-style-port-folio-2i.vercel.app) | [![Contact](https://image.thum.io/get/width/640/crop/400/noanimate/https://neural-synaptic-style-port-folio-2i.vercel.app)](https://neural-synaptic-style-port-folio-2i.vercel.app) |
 
 ---
 
