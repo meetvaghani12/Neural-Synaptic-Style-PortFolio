@@ -192,11 +192,12 @@ export default function ContactOverlay() {
         {/* Headline */}
         <h2 style={{
           fontFamily: 'system-ui, sans-serif',
-          fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+          fontSize: 'clamp(1.9rem, 4vw, 3rem)',
           fontWeight: 900, color: '#fff',
           whiteSpace: 'pre-line',
+          wordBreak: 'keep-all',
           marginBottom: 16,
-          lineHeight: 1.15,
+          lineHeight: 1.2,
           textShadow: `0 0 60px ${color}55, 0 2px 4px rgba(0,0,0,0.8)`,
           letterSpacing: '-0.01em',
         }}>
