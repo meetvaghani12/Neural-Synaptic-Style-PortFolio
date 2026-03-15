@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 // AI / ML / Neural Network code snippets
 const SNIPPETS = [
@@ -141,28 +141,10 @@ const SNIPPETS = [
   },
 ]
 
-// Safe zones to avoid center text — quadrants
-const POSITIONS = [
-  { top: '8%',  left: '1%'  },
-  { top: '5%',  right: '1%' },
-  { top: '62%', left: '1%'  },
-  { top: '68%', right: '1%' },
-  { top: '30%', left: '1%'  },
-  { top: '28%', right: '1%' },
-  { top: '80%', left: '18%' },
-  { top: '78%', right: '18%'},
-]
-
-let usedPositions = new Set()
-
-function getPosition() {
-  const available = POSITIONS.filter((_, i) => !usedPositions.has(i))
-  if (!available.length) { usedPositions.clear(); return POSITIONS[0] }
-  const idx = Math.floor(Math.random() * available.length)
-  const realIdx = POSITIONS.indexOf(available[idx])
-  usedPositions.add(realIdx)
-  return available[idx]
-}
+// Two well-separated slots — top-right and bottom-left (never overlap)
+const SLOT_A = { top: '6%',    right: '1%' }
+const SLOT_B = { bottom: '6%', left:  '1%' }
+const SLOTS  = [SLOT_A, SLOT_B]
 
 function CodeWindow({ snippet, pos, onDone }) {
   const [phase, setPhase] = useState('in')  // in | visible | out
@@ -244,40 +226,32 @@ function colorize(line, accent) {
   return '#64748b'                                 // default
 }
 
-const MIN_VISIBLE = 4
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
+// Each fixed slot cycles its own snippet independently — no overlap possible
+function SlotWindow({ pos }) {
+  const [key,     setKey]     = useState(0)
+  const [snippet, setSnippet] = useState(
+    () => SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)]
+  )
+
+  function cycle() {
+    let next
+    do { next = SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)] }
+    while (next === snippet)
+    setSnippet(next)
+    setKey(k => k + 1)
+  }
+
+  return <CodeWindow key={key} snippet={snippet} pos={pos} onDone={cycle} />
+}
 
 export default function FloatingCode() {
-  const [windows, setWindows] = useState([])
-  const counterRef = useRef(0)
-
-  function spawn() {
-    const id      = counterRef.current++
-    const snippet = SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)]
-    const pos     = getPosition()
-    setWindows(w => [...w, { id, snippet, pos }])
-  }
-
-  useEffect(() => {
-    // Spawn MIN_VISIBLE immediately with small stagger so they don't all appear at once
-    for (let i = 0; i < MIN_VISIBLE; i++) {
-      setTimeout(spawn, i * 400)
-    }
-  }, [])
-
-  function remove(id) {
-    setWindows(w => {
-      const next = w.filter(x => x.id !== id)
-      // If dropping below minimum, spawn a replacement after a short gap
-      if (next.length < MIN_VISIBLE) setTimeout(spawn, 600)
-      return next
-    })
-  }
+  if (isMobile) return null
 
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3, overflow: 'hidden' }}>
-      {windows.map(w => (
-        <CodeWindow key={w.id} snippet={w.snippet} pos={w.pos} onDone={() => remove(w.id)} />
-      ))}
+      {SLOTS.map((pos, i) => <SlotWindow key={i} pos={pos} />)}
     </div>
   )
 }
