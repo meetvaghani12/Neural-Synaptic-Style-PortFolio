@@ -236,14 +236,18 @@ export default function ProjectsOverlay() {
       <HudCorners />
 
       {/* Content */}
-      <div style={{
-        position: 'relative', zIndex: 2,
-        width: '100%',
-        padding: isMobile ? '72px 16px 32px' : '0 40px 0 52px',
-        maxHeight: isMobile ? '100vh' : '90vh',
-        overflowY: 'auto',
-        scrollbarWidth: 'none',
-      }}>
+      <div
+        onTouchStart={e => e.stopPropagation()}
+        onTouchMove={e => e.stopPropagation()}
+        style={{
+          position: 'relative', zIndex: 2,
+          width: '100%',
+          padding: isMobile ? '72px 16px 32px' : '0 40px 0 52px',
+          maxHeight: isMobile ? '100vh' : '90vh',
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          touchAction: 'pan-y',
+        }}>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 36 }}>

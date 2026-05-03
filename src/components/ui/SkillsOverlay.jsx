@@ -205,16 +205,20 @@ export default function SkillsOverlay() {
       <HudCorners color="#34d399" />
 
       {/* Content */}
-      <div style={{
-        position: 'relative', zIndex: 2,
-        width: '100%',
-        // Mobile: top padding clears the fixed navbar (~56px) + breathing room.
-        // Desktop: horizontal padding only; container centers vertically.
-        padding: isMobile ? '72px 20px 32px' : '0 40px 0 52px',
-        maxHeight: isMobile ? '100vh' : '90vh',
-        overflowY: 'auto',
-        scrollbarWidth: 'none',
-      }}>
+      <div
+        onTouchStart={e => e.stopPropagation()}
+        onTouchMove={e => e.stopPropagation()}
+        style={{
+          position: 'relative', zIndex: 2,
+          width: '100%',
+          // Mobile: top padding clears the fixed navbar (~56px) + breathing room.
+          // Desktop: horizontal padding only; container centers vertically.
+          padding: isMobile ? '72px 20px 32px' : '0 40px 0 52px',
+          maxHeight: isMobile ? '100vh' : '90vh',
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          touchAction: 'pan-y',
+        }}>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 36 }}>
