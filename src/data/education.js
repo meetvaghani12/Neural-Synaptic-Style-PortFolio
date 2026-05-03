@@ -1,28 +1,17 @@
 // ─────────────────────────────────────────────
-//  EDUCATION DATA — replace with your real details
+//  EDUCATION DATA
 // ─────────────────────────────────────────────
 
 export const education = [
   {
     id: 'pdeu',
-    degree: 'B.Tech in Computer Engineering',
+    degree: 'B.Tech — Computer Science & Engineering',
     institution: 'Pandit Deendayal Energy University',
     shortName: 'PDEU',
     period: '2021 — 2025',
     location: 'Gandhinagar, India',
     description:
-      'Specialised in software engineering with strong focus on web technologies, algorithms, and machine learning fundamentals.',
-    grade: 'Active',
-  },
-  {
-    id: 'baps',
-    degree: 'Higher Secondary Education (Science)',
-    institution: 'BAPS Swaminarayan Vidyamandir',
-    shortName: 'BAPS',
-    period: '2018 — 2021',
-    location: 'India',
-    description:
-      'Completed higher secondary education with Physics, Chemistry, Mathematics, and Computer Science.',
-    grade: 'Completed',
+      'GPA 8.26. Coursework: Operating Systems, Data Structures, Analysis of Algorithms, Artificial Intelligence, Machine Learning, Networking, Databases.',
+    grade: '8.26 GPA',
   },
 ]

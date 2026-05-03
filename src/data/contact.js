@@ -1,26 +1,21 @@
 // ─────────────────────────────────────────────
-//  CONTACT DATA — replace with your real links
+//  CONTACT DATA
 // ─────────────────────────────────────────────
 
 export const contact = {
   headline: "Let's build something\nremarkable together.",
   subtext: 'Open to full-time roles, freelance projects, and AI-driven collaborations.',
-  email: 'meet@meetvaghani.dev', // replace with real email
+  email: 'meetvaghani1239@gmail.com',
   social: [
     {
       label: 'GitHub',
-      url: 'https://github.com/meetvaghani', // replace with real URL
+      url: 'https://github.com/meetvaghani12',
       icon: 'github',
     },
     {
       label: 'LinkedIn',
-      url: 'https://www.linkedin.com/in/meet-vaghani-422a78224/',
+      url: 'https://linkedin.com/in/MeetVaghani',
       icon: 'linkedin',
-    },
-    {
-      label: 'Twitter',
-      url: 'https://twitter.com/meetvaghani', // replace with real URL
-      icon: 'twitter',
     },
   ],
 }
