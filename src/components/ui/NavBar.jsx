@@ -3,10 +3,11 @@ import useStore from '../../store/useStore'
 import { hero } from '../../data/hero'
 
 const SECTIONS = [
-  { label: 'About',    scroll: 0.00 },
-  { label: 'Skills',   scroll: 0.35 },
-  { label: 'Projects', scroll: 0.75 },
-  { label: 'Contact',  scroll: 1.00 },
+  { label: 'About',      scroll: 0.00 },
+  { label: 'Skills',     scroll: 0.32 },
+  { label: 'Experience', scroll: 0.60 },
+  { label: 'Projects',   scroll: 0.82 },
+  { label: 'Contact',    scroll: 0.96 },
 ]
 
 const isMobile = () => window.innerWidth < 768
@@ -92,7 +93,8 @@ export default function NavBar() {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', gap: 5,
-                padding: '4px 2px',
+                padding: '10px', margin: '-10px', // 44px touch target
+                touchAction: 'manipulation',
               }}
               aria-label="Toggle menu"
             >
@@ -133,8 +135,10 @@ export default function NavBar() {
                   letterSpacing: '0.2em', textTransform: 'uppercase',
                   color: active ? '#60a5fa' : '#475569',
                   textShadow: active ? '0 0 12px #60a5fa' : 'none',
-                  padding: '14px 0',
+                  padding: '16px 0',
                   borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  touchAction: 'manipulation',
+                  minHeight: 48,
                 }}
               >
                 {sec.label}

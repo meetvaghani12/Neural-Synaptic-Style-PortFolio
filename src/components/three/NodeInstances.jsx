@@ -10,8 +10,12 @@ import useStore from '../../store/useStore'
 const NODES = NODES_WITH_POS
 
 // Scroll range over which nodes travel from scatter → organized positions
-const ASSEMBLE_START = 0.08  // scatter starts dissolving
-const ASSEMBLE_END   = 0.28  // fully assembled into layers
+const ASSEMBLE_START = 0.08
+const ASSEMBLE_END   = 0.28
+
+// Reusable color constants — never allocate inside useFrame
+const WHITE_COLOR = new THREE.Color('#ffffff')
+const GREY_COLOR  = new THREE.Color(0.08, 0.10, 0.18)  // muted dark-blue grey for dimmed nodes
 
 function smoothstep(a, b, x) {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)))
@@ -51,48 +55,65 @@ function NodeMesh({ node }) {
     const nnFade = useStore.getState().nnFade
     const visible = 1 - nnFade
 
-    // Hide mesh entirely when fully faded
-    meshRef.current.visible = visible > 0.01
-
-    // Interpolate position: scatter → organized
+    // ── Position: scatter → organized ──
     const scatter = node.scatterPosition
     const target  = node.position
-
-    // Add gentle float to scatter position
-    const floatY = Math.sin(t * 0.4 + (node.scatterPhase ?? 0)) * 0.12
-    const floatX = Math.cos(t * 0.3 + (node.scatterPhase ?? 0) * 1.3) * 0.08
-
+    const floatY  = Math.sin(t * 0.4 + (node.scatterPhase ?? 0)) * 0.12
+    const floatX  = Math.cos(t * 0.3 + (node.scatterPhase ?? 0) * 1.3) * 0.08
     let x = scatter.x + floatX + (target.x - scatter.x - floatX) * asm
     let y = scatter.y + floatY + (target.y - scatter.y - floatY) * asm
     let z = scatter.z           + (target.z - scatter.z)          * asm
 
-    // Convergence: nodes rush toward center as nnFade increases
-    // Each node has a slight offset delay based on its layer so they converge in sequence
+    // ── Convergence ──
     const layerDelay = node.layer * 0.08
     const convergeT  = Math.max(0, Math.min(1, (nnFade - layerDelay) / (1 - layerDelay + 0.01)))
-    const ct = convergeT * convergeT * (3 - 2 * convergeT) // smoothstep
+    const ct = convergeT * convergeT * (3 - 2 * convergeT)
     x = x + (0 - x) * ct
     y = y + (0 - y) * ct
     z = z + (0 - z) * ct * 0.6
-
     meshRef.current.position.set(x, y, z)
 
-    // Interpolate color: all blue → layer color
+    // ── Color: blue → layer color → white (convergence) ──
     currentColor.copy(heroColor).lerp(targetColor, asm)
-    // Brighten toward white as nodes converge (charging up effect)
-    const white = new THREE.Color('#ffffff')
-    currentColor.lerp(white, ct * 0.7)
+    currentColor.lerp(WHITE_COLOR, ct * 0.7)
+
+    // ── Section-aware dimming ──────────────────────────────────────────────────
+    // Each content section highlights its relevant layers; others fade to near-grey.
+    // Dimming fades IN before the panel slides in (intro moment) and OUT as it exits.
+    const skillsDim = smoothstep(0.11, 0.24, p) * (1 - smoothstep(0.40, 0.46, p))
+    const expDim    = smoothstep(0.44, 0.54, p) * (1 - smoothstep(0.65, 0.71, p))
+    const projDim   = smoothstep(0.69, 0.77, p) * (1 - smoothstep(0.85, 0.90, p))
+
+    const isSkillNode = node.layer === 1 || node.layer === 2 || node.layer === 3
+    const isExpNode   = node.layer === 0 || node.layer === 5
+    const isProjNode  = node.layer === 4
+
+    let dimT           = 0
+    let highlightBoost = 0
+    if (!isSkillNode) dimT = Math.max(dimT, skillsDim)
+    else              highlightBoost = Math.max(highlightBoost, skillsDim * 0.35)
+    if (!isExpNode)   dimT = Math.max(dimT, expDim)
+    else              highlightBoost = Math.max(highlightBoost, expDim * 0.35)
+    if (!isProjNode)  dimT = Math.max(dimT, projDim)
+    else              highlightBoost = Math.max(highlightBoost, projDim * 0.35)
+
+    // Shift dimmed nodes toward a muted grey-blue
+    if (dimT > 0) currentColor.lerp(GREY_COLOR, dimT * 0.80)
     material.uniforms.uColor.value.copy(currentColor)
 
-    // Activation (hover) + convergence glow spike
+    // ── Opacity / visibility ──
+    const dimmedVisible = visible * (1 - dimT * 0.85)
+    material.opacity = dimmedVisible
+    meshRef.current.visible = dimmedVisible > 0.01
+
+    // ── Activation: hover + convergence spike + highlight boost ──
     const isHov = useStore.getState().hoveredNode === node.id
     const cur   = activationRef.current
     activationRef.current = cur + ((isHov ? 1 : 0) - cur) * (isHov ? 0.14 : 0.05)
-    material.uniforms.uActivation.value = Math.max(activationRef.current, ct * 1.2) * visible
+    material.uniforms.uActivation.value = Math.max(activationRef.current, ct * 1.2, highlightBoost) * visible
     material.uniforms.uTime.value = t
-    material.opacity = visible
 
-    // Scale: slightly smaller in scatter mode
+    // ── Scale ──
     const baseScale = node.size * 2 * (0.75 + asm * 0.25)
     const hoverBump = activationRef.current * 0.4
     meshRef.current.scale.setScalar(baseScale * (1 + hoverBump))

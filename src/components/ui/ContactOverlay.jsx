@@ -95,6 +95,9 @@ function SignalDots() {
   )
 }
 
+// Module-level so all sub-components below can reference it
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
 // ── Status row ────────────────────────────────────────────────────────────────
 function StatusRow({ color }) {
   return (
@@ -102,7 +105,7 @@ function StatusRow({ color }) {
       display: 'flex', alignItems: 'center', gap: 8,
       fontFamily: 'monospace', fontSize: 10,
       color: '#1e3a5f', letterSpacing: '0.2em',
-      marginBottom: window.innerWidth < 768 ? 18 : 32,
+      marginBottom: isMobile ? 18 : 32,
     }}>
       <div style={{
         width: 6, height: 6, borderRadius: '50%',
@@ -126,7 +129,7 @@ export default function ContactOverlay() {
 
   // Circle burst from center — matches nodes converging then exploding outward
   // Starts at 0.83 so it overlaps slightly with the last nodes rushing in
-  const slideT    = Math.max(0, Math.min(1, (progress - 0.83) / 0.17))
+  const slideT    = Math.max(0, Math.min(1, (progress - 0.91) / 0.09))
   const st        = slideT * slideT * (3 - 2 * slideT) // smoothstep
   const clipRadius = st * 160   // 0% → 160% covers full screen including corners
   const opacity   = Math.min(1, slideT * 1.4)
@@ -175,7 +178,7 @@ export default function ContactOverlay() {
       }} />
 
       {/* Content */}
-      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 560, padding: window.innerWidth < 768 ? '0 16px' : '0 24px', width: '100%' }}>
+      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 560, padding: isMobile ? '0 16px' : '0 24px', width: '100%' }}>
 
         <StatusRow color={color} />
 
@@ -214,9 +217,9 @@ export default function ContactOverlay() {
         <p style={{
           fontFamily: 'system-ui, sans-serif',
           fontWeight: 300,
-          fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem',
+          fontSize: isMobile ? '0.9rem' : '1rem',
           color: '#94a3b8',
-          marginBottom: window.innerWidth < 768 ? 24 : 36,
+          marginBottom: isMobile ? 24 : 36,
           lineHeight: 1.8,
         }}>
           {contact.subtext}
@@ -227,12 +230,12 @@ export default function ContactOverlay() {
           href={`mailto:${contact.email}`}
           style={{
             display: 'inline-block',
-            fontFamily: 'monospace', fontSize: window.innerWidth < 768 ? 11 : 14,
+            fontFamily: 'monospace', fontSize: isMobile ? 11 : 14,
             color,
             textDecoration: 'none',
             border: `1px solid ${color}44`,
-            borderRadius: 8, padding: window.innerWidth < 768 ? '10px 16px' : '12px 32px',
-            marginBottom: window.innerWidth < 768 ? 20 : 32,
+            borderRadius: 8, padding: isMobile ? '10px 16px' : '12px 32px',
+            marginBottom: isMobile ? 20 : 32,
             wordBreak: 'break-all',
             background: `${color}0d`,
             letterSpacing: '0.05em',
@@ -254,7 +257,7 @@ export default function ContactOverlay() {
         </a>
 
         {/* Social links */}
-        <div style={{ display: 'flex', gap: window.innerWidth < 768 ? 8 : 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 8 : 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           {contact.social.map(s => (
             <a
               key={s.label}

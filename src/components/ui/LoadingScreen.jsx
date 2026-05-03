@@ -52,11 +52,11 @@ export default function LoadingScreen({ onComplete, visible }) {
       </div>
 
       {/* Boot lines */}
-      <div style={{ fontFamily: 'monospace', width: 340 }}>
+      <div style={{ fontFamily: 'monospace', width: 'min(340px, 88vw)', padding: '0 4px' }}>
         {BOOT_LINES.slice(0, lineIdx + 1).map((line, i) => (
           <div key={i} style={{
             color: i === lineIdx ? '#60a5fa' : '#1e3a5f',
-            fontSize: 13,
+            fontSize: 'clamp(11px, 3.5vw, 13px)',
             marginBottom: 6,
             opacity: i === lineIdx ? 1 : 0.4,
             transition: 'color 0.3s, opacity 0.3s',

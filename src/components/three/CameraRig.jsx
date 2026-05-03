@@ -34,8 +34,8 @@ export default function CameraRig() {
       playAssemblySweep()
     }
 
-    // Fade out main NN between 0.68 and 0.86 — nodes converge then contact bursts out
-    const fade = smoothstep(0.68, 0.86, p)
+    // Fade out main NN between 0.88 and 0.96 — nodes converge then contact bursts out
+    const fade = smoothstep(0.88, 0.96, p)
     setNnFade(fade)
   })
 

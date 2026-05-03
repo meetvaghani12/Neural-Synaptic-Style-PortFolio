@@ -144,10 +144,12 @@ function ScanLine({ color }) {
 
 // ── NODE TYPE → accent color ──────────────────────────────────────────────────
 const TYPE_COLOR = {
-  identity:  '#60a5fa',
-  role:      '#34d399',
-  education: '#a78bfa',
-  location:  '#f59e0b',
+  identity:   '#60a5fa',
+  role:       '#34d399',
+  education:  '#a78bfa',
+  location:   '#f59e0b',
+  project:    '#f472b6',
+  experience: '#38bdf8',
 }
 
 // ── Main Card ─────────────────────────────────────────────────────────────────
@@ -155,7 +157,7 @@ export default function InputNodeCard() {
   const activeNode = useStore(s => s.activeNode)
   const setActive  = useStore(s => s.setActiveNode)
 
-  const node = activeNode ? NODES_WITH_POS.find(n => n.id === activeNode && n.layer === 0) : null
+  const node = activeNode ? NODES_WITH_POS.find(n => n.id === activeNode && (n.layer === 0 || n.layer === 4 || n.layer === 5)) : null
   const data = node ? NODE_CARDS[node.id] : null
   const visible = !!data
 
@@ -226,17 +228,20 @@ export default function InputNodeCard() {
           {/* Scan line */}
           {phase === 'visible' && <ScanLine color={color} />}
 
-          {/* Close */}
+          {/* Close — 44×44 touch target */}
           <button
             onClick={() => setActive(null)}
             style={{
-              position: 'absolute', top: 14, right: 14,
+              position: 'absolute', top: 6, right: 6,
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#334155', fontSize: 18, lineHeight: 1, zIndex: 3,
+              color: '#334155', fontSize: 20, lineHeight: 1, zIndex: 3,
+              width: 44, height: 44,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'color 0.2s',
+              touchAction: 'manipulation',
             }}
-            onMouseEnter={e => e.target.style.color = color}
-            onMouseLeave={e => e.target.style.color = '#334155'}
+            onMouseEnter={e => e.currentTarget.style.color = color}
+            onMouseLeave={e => e.currentTarget.style.color = '#334155'}
           >×</button>
 
           {/* Header */}
@@ -328,9 +333,10 @@ export default function InputNodeCard() {
                     color: color + 'cc',
                     background: color + '11',
                     border: `1px solid ${color}33`,
-                    borderRadius: 6, padding: '5px 12px',
+                    borderRadius: 6, padding: '8px 14px',
                     textDecoration: 'none', letterSpacing: '0.1em',
                     transition: 'all 0.2s',
+                    touchAction: 'manipulation',
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.background = color + '22'

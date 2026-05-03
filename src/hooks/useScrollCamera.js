@@ -7,25 +7,25 @@ import useStore from '../store/useStore'
 const MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // Camera waypoints per scroll progress 0→1
-// On mobile use a higher Z (further back) so the full NN fits in a narrow viewport
+// Desktop: shift left during content sections so network is visible in the left half
+// while the right-side content panel occupies the right half of the screen.
+// Mobile: stay centered, further back (panels go full-screen on mobile).
 const WAYPOINTS = MOBILE
   ? [
-      { progress: 0.00, pos: [0,  0,  28],  target: [0, 0, 0]  }, // Hero: wide view, further back on mobile
-      { progress: 0.18, pos: [0,  0,  26],  target: [0, 0, 0]  }, // Network assembling
-      { progress: 0.30, pos: [0,  0,  22],  target: [0, 0, 0]  }, // Full architecture visible
-      { progress: 0.50, pos: [-4, 0,  16],  target: [-3, 0, 0] }, // Zoom left — input + hidden 1
-      { progress: 0.70, pos: [4,  0,  16],  target: [3,  0, 0] }, // Zoom right — hidden 3 + output
-      { progress: 1.00, pos: [0,  8,  20],  target: [0,  0, 0] }, // Bird's eye — contact
+      { progress: 0.00, pos: [0,  0,  28], target: [0,  0, 0] },
+      { progress: 0.18, pos: [0,  0,  26], target: [0,  0, 0] },
+      { progress: 0.28, pos: [0,  0,  24], target: [0,  0, 0] },
+      { progress: 0.47, pos: [0,  0,  22], target: [0,  0, 0] },
+      { progress: 0.68, pos: [0,  0,  22], target: [0,  0, 0] },
+      { progress: 1.00, pos: [0,  8,  24], target: [0,  0, 0] },
     ]
   : [
-      // Fully connected NN is 16 units wide (X: -8 to +8), ~6 units tall
-      // Camera at Z=14 sees the full network comfortably at FOV 55
-      { progress: 0.00, pos: [0,  0,  22],  target: [0, 0, 0]  }, // Hero: scattered nodes, wide view
-      { progress: 0.18, pos: [0,  0,  20],  target: [0, 0, 0]  }, // Network assembling
-      { progress: 0.30, pos: [0,  0,  17],  target: [0, 0, 0]  }, // Full architecture visible
-      { progress: 0.50, pos: [-5, 0,  10],  target: [-4, 0, 0] }, // Zoom left — input + hidden 1
-      { progress: 0.70, pos: [5,  0,  10],  target: [4,  0, 0] }, // Zoom right — hidden 3 + output
-      { progress: 1.00, pos: [0,  8,  14],  target: [0,  0, 0] }, // Bird's eye — contact
+      { progress: 0.00, pos: [0,   0, 22], target: [0,  0, 0] },  // Hero — centered
+      { progress: 0.18, pos: [-1,  0, 20], target: [-1, 0, 0] },  // Start shifting left
+      { progress: 0.28, pos: [-3,  0, 17], target: [-2, 0, 0] },  // Skills panel — network fills left half
+      { progress: 0.47, pos: [-2,  0, 15], target: [-1, 0, 0] },  // Experience approaching
+      { progress: 0.68, pos: [-2,  0, 15], target: [-1, 0, 0] },  // Projects — similar angle
+      { progress: 1.00, pos: [0,   8, 18], target: [0,  0, 0] },  // Contact — bird's-eye
     ]
 
 const tmpPos    = new THREE.Vector3()
