@@ -129,7 +129,7 @@ export default function ContactOverlay() {
 
   // Circle burst from center — matches nodes converging then exploding outward
   // Starts at 0.83 so it overlaps slightly with the last nodes rushing in
-  const slideT    = Math.max(0, Math.min(1, (progress - 0.91) / 0.09))
+  const slideT    = Math.max(0, Math.min(1, (progress - 0.88) / 0.12))
   const st        = slideT * slideT * (3 - 2 * slideT) // smoothstep
   const clipRadius = st * 160   // 0% → 160% covers full screen including corners
   const opacity   = Math.min(1, slideT * 1.4)

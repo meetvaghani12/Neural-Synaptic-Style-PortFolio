@@ -4,24 +4,44 @@ import { EDGES, NODES_WITH_POS } from '../data/network'
 import useStore from '../store/useStore'
 
 const MAX_SIGNALS = 35
-const SIGNAL_SPEED = 0.38 // units per second along edge (0→1)
+const SIGNAL_SPEED = 0.38
 
 let nextId = 0
 
-export function useSignalSystem() {
-  const signalsRef = useRef([])
-  const timerRef   = useRef(0)
-  const setSignals = useStore(s => s.setSignals)
+// Build edge index lookup: nodeId → array of edge indices connected to that node
+const nodeEdgeMap = {}
+EDGES.forEach((edge, i) => {
+  if (!nodeEdgeMap[edge.from]) nodeEdgeMap[edge.from] = []
+  if (!nodeEdgeMap[edge.to])   nodeEdgeMap[edge.to]   = []
+  nodeEdgeMap[edge.from].push(i)
+  nodeEdgeMap[edge.to].push(i)
+})
 
-  // Spawn a new random signal on the network
-  const spawnSignal = () => {
+export function useSignalSystem() {
+  const signalsRef     = useRef([])
+  const timerRef       = useRef(0)
+  const focusTimerRef  = useRef(0)
+  const prevFocusRef   = useRef(null)
+  const setSignals     = useStore(s => s.setSignals)
+
+  // Spawn a new random signal
+  const spawnSignal = (edgeIdx) => {
     if (signalsRef.current.length >= MAX_SIGNALS) return
-    const edgeIdx = Math.floor(Math.random() * EDGES.length)
+    const idx = edgeIdx ?? Math.floor(Math.random() * EDGES.length)
     signalsRef.current.push({
       id: nextId++,
-      edgeIdx,
+      edgeIdx: idx,
       progress: 0,
       active: true,
+    })
+  }
+
+  // Spawn burst of signals along all edges connected to a node
+  const spawnFocusBurst = (nodeId) => {
+    const edgeIndices = nodeEdgeMap[nodeId] ?? []
+    edgeIndices.forEach((idx, i) => {
+      // Stagger slightly
+      setTimeout(() => spawnSignal(idx), i * 60)
     })
   }
 
@@ -34,9 +54,31 @@ export function useSignalSystem() {
 
   useFrame((_, delta) => {
     timerRef.current += delta
+    focusTimerRef.current += delta
 
-    // Spawn new signal every 300–700ms
-    if (timerRef.current > 0.3 + Math.random() * 0.4) {
+    const focused = useStore.getState().focusedNode
+
+    // Detect focus change — fire burst
+    if (focused !== prevFocusRef.current) {
+      prevFocusRef.current = focused
+      if (focused) {
+        spawnFocusBurst(focused)
+      }
+    }
+
+    // Keep firing signals along focused node's edges periodically
+    if (focused && focusTimerRef.current > 0.8) {
+      focusTimerRef.current = 0
+      const edgeIndices = nodeEdgeMap[focused] ?? []
+      if (edgeIndices.length > 0) {
+        const idx = edgeIndices[Math.floor(Math.random() * edgeIndices.length)]
+        spawnSignal(idx)
+      }
+    }
+
+    // Ambient signals (slower when focused)
+    const ambientInterval = focused ? 0.8 + Math.random() * 0.6 : 0.3 + Math.random() * 0.4
+    if (timerRef.current > ambientInterval) {
       timerRef.current = 0
       spawnSignal()
     }
@@ -48,7 +90,7 @@ export function useSignalSystem() {
         const newProg = sig.progress + delta * SIGNAL_SPEED
         if (newProg >= 1.0) {
           changed = true
-          return null // remove
+          return null
         }
         if (sig.progress !== newProg) changed = true
         return { ...sig, progress: newProg }
@@ -60,7 +102,6 @@ export function useSignalSystem() {
   })
 }
 
-// Returns signals relevant to a specific edge index
 export function useEdgeSignals(edgeIdx) {
   return useStore(s => s.signals.filter(sig => sig.edgeIdx === edgeIdx))
 }

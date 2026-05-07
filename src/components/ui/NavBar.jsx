@@ -4,10 +4,10 @@ import { hero } from '../../data/hero'
 
 const SECTIONS = [
   { label: 'About',      scroll: 0.00 },
-  { label: 'Skills',     scroll: 0.32 },
-  { label: 'Experience', scroll: 0.60 },
-  { label: 'Projects',   scroll: 0.82 },
-  { label: 'Contact',    scroll: 0.96 },
+  { label: 'Skills',     scroll: 0.25 },
+  { label: 'Projects',   scroll: 0.55 },
+  { label: 'Experience', scroll: 0.70 },
+  { label: 'Contact',    scroll: 0.92 },
 ]
 
 const isMobile = () => window.innerWidth < 768

@@ -14,7 +14,7 @@ export const contact = {
     },
     {
       label: 'LinkedIn',
-      url: 'https://linkedin.com/in/MeetVaghani',
+      url: 'https://www.linkedin.com/in/meetvaghani12/',
       icon: 'linkedin',
     },
   ],

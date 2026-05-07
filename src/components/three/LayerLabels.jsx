@@ -30,15 +30,14 @@ function getLayerTopY() {
 const LAYER_TOP_Y = getLayerTopY()
 
 // Get X position of each layer
-const LAYER_X = { 0: -8, 1: -4, 2: 0, 3: 4, 4: 8 }
+const LAYER_X = { 0: -7, 1: -3.5, 2: 0, 3: 3.5, 4: 7, 5: 10.5 }
 
 export default function LayerLabels() {
   const opacityRef = useRef(0)
 
   useFrame(() => {
-    const p      = useStore.getState().scrollProgress
-    const nnFade = useStore.getState().nnFade
-    opacityRef.current = smoothstep(ASSEMBLE_START + 0.1, ASSEMBLE_END + 0.1, p) * (1 - nnFade)
+    const p = useStore.getState().scrollProgress
+    opacityRef.current = smoothstep(ASSEMBLE_START + 0.1, ASSEMBLE_END + 0.1, p)
   })
 
   return (

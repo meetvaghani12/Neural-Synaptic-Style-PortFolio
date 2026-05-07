@@ -2,10 +2,10 @@ import useStore from '../../store/useStore'
 
 const SECTIONS = [
   { label: 'ABOUT',      at: 0.00, color: '#60a5fa' },
-  { label: 'SKILLS',     at: 0.32, color: '#34d399' },
-  { label: 'EXPERIENCE', at: 0.60, color: '#f59e0b' },
-  { label: 'PROJECTS',   at: 0.82, color: '#f472b6' },
-  { label: 'CONTACT',    at: 0.95, color: '#60a5fa' },
+  { label: 'SKILLS',     at: 0.25, color: '#34d399' },
+  { label: 'PROJECTS',   at: 0.55, color: '#f472b6' },
+  { label: 'EXPERIENCE', at: 0.70, color: '#f59e0b' },
+  { label: 'CONTACT',    at: 0.92, color: '#60a5fa' },
 ]
 
 export default function ScrollProgress() {

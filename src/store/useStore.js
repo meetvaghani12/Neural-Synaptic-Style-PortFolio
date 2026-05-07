@@ -21,6 +21,16 @@ const useStore = create((set, get) => ({
   activeNode: null,
   setActiveNode: (id) => set({ activeNode: id === get().activeNode ? null : id }),
 
+  // ── Focused node — camera zooms to this node, detail card appears
+  focusedNode: null,
+  setFocusedNode: (id) => {
+    set({ focusedNode: id === get().focusedNode ? null : id })
+    if (id && !get().hasInteracted) set({ hasInteracted: true })
+  },
+
+  // ── First interaction flag — hides the "click nodes" prompt
+  hasInteracted: false,
+
   // ── Activation map: nodeId → activation level 0→1
   activations: {},
   setActivation: (id, value) =>

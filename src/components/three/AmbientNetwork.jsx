@@ -79,12 +79,12 @@ export default function AmbientNetwork() {
 
   useFrame(({ clock }) => {
     const t      = clock.getElapsedTime()
-    const nnFade = useStore.getState().nnFade
-    // Ambient network is dim always, brightens when main NN fades
-    const baseVis  = 0.08                          // always slightly visible
-    const fadeBoost = nnFade * 0.55               // gets much brighter at contact
-    const nodeVis  = baseVis + fadeBoost
-    const edgeVis  = (baseVis * 0.5) + nnFade * 0.3
+    const p      = useStore.getState().scrollProgress
+    // Ambient network is dim always, brightens slightly near contact
+    const contactT = Math.max(0, Math.min(1, (p - 0.85) / 0.15))
+    const baseVis  = 0.08
+    const nodeVis  = baseVis + contactT * 0.3
+    const edgeVis  = (baseVis * 0.5) + contactT * 0.2
 
     // Float nodes
     BG_NODES.forEach((n, i) => {

@@ -2,16 +2,17 @@ import * as THREE from 'three'
 
 // ── Layer layout ──────────────────────────────────────────────────────────────
 // Classic NN: layers spread on X axis, nodes spread on Y axis, all at Z=0
-const LAYER_X   = { 0: -7, 1: -3.5, 2: 0, 3: 3.5, 4: 7 }
+const LAYER_X   = { 0: -7, 1: -3.5, 2: 0, 3: 3.5, 4: 7, 5: 10.5 }
 const NODE_SIZE = 0.34
 const Y_SPACING = 2.0    // enough room for label below each node without overlap
 
 export const LAYER_COLORS = {
-  0: '#5b8dee', // blue   — input
-  1: '#34d399', // green  — hidden 1 (frontend)
-  2: '#f59e0b', // amber  — hidden 2 (backend)
-  3: '#a78bfa', // purple — hidden 3 (AI/ML)
-  4: '#f472b6', // pink   — output (projects)
+  0: '#5b8dee',
+  1: '#34d399',
+  2: '#f59e0b',
+  3: '#a78bfa',
+  4: '#f472b6',
+  5: '#38bdf8',
 }
 
 export const LAYER_LABELS = {
@@ -20,6 +21,7 @@ export const LAYER_LABELS = {
   2: 'Hidden 2',
   3: 'Hidden 3',
   4: 'Output',
+  5: 'Experience',
 }
 
 // ── Node definitions ──────────────────────────────────────────────────────────
@@ -51,12 +53,18 @@ export const NODES = [
   { id: 'ml',        label: 'ML',             layer: 3, type: 'skill', skillGroup: 'ai', size: NODE_SIZE },
 
   // Output layer — Projects (6 nodes)
-  { id: 'vaghanigpt',  label: 'VaghaniGPT',  layer: 4, type: 'project', size: NODE_SIZE + 0.04 },
-  { id: 'vedrix',      label: 'Vedrix',      layer: 4, type: 'project', size: NODE_SIZE },
-  { id: 'anveshacode', label: 'AnveshaCode', layer: 4, type: 'project', size: NODE_SIZE },
+  { id: 'vedrix',      label: 'Vedrix',      layer: 4, type: 'project', size: NODE_SIZE + 0.04 },
   { id: 'homepraise',  label: 'HomePraise',  layer: 4, type: 'project', size: NODE_SIZE },
-  { id: 'eventopia',   label: 'Eventopia',   layer: 4, type: 'project', size: NODE_SIZE },
-  { id: 'finlink',     label: 'FinLink',     layer: 4, type: 'project', size: NODE_SIZE },
+  { id: 'genmode',     label: 'GenMode',     layer: 4, type: 'project', size: NODE_SIZE },
+  { id: 'mayave',      label: 'Mayave',      layer: 4, type: 'project', size: NODE_SIZE },
+  { id: 'musictribe',  label: 'Music Tribe', layer: 4, type: 'project', size: NODE_SIZE },
+  { id: 'schoolerp',   label: 'School ERP',  layer: 4, type: 'project', size: NODE_SIZE },
+
+  // Experience layer (4 nodes)
+  { id: 'exp-woosong',  label: 'Woosong Univ',  layer: 5, type: 'experience', size: NODE_SIZE },
+  { id: 'exp-superior', label: 'Superior Exp',  layer: 5, type: 'experience', size: NODE_SIZE },
+  { id: 'exp-apparrow', label: 'Apparrow',      layer: 5, type: 'experience', size: NODE_SIZE + 0.04 },
+  { id: 'exp-devx',     label: 'DevX AI Labs',  layer: 5, type: 'experience', size: NODE_SIZE + 0.06 },
 ]
 
 // ── Assign grid positions (organised NN layout) ───────────────────────────────
@@ -108,7 +116,7 @@ NODES_WITH_POS.forEach(n => {
   byLayer[n.layer].push(n)
 })
 
-for (let l = 0; l < 4; l++) {
+for (let l = 0; l < 5; l++) {
   const from = byLayer[l]   ?? []
   const to   = byLayer[l+1] ?? []
   from.forEach(f => to.forEach(t => {

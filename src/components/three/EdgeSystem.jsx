@@ -29,7 +29,6 @@ export default function EdgeSystem() {
       const points = [from.position.clone(), to.position.clone()]
       const geo    = new THREE.BufferGeometry().setFromPoints(points)
 
-      // Color: blend between layers
       const cFrom = new THREE.Color(getNodeColor(from))
       const cTo   = new THREE.Color(getNodeColor(to))
       const blended = cFrom.clone().lerp(cTo, 0.5)
@@ -41,22 +40,44 @@ export default function EdgeSystem() {
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       })
-      return { geo, mat, from, to }
+      return { geo, mat, from, to, edge }
     }).filter(Boolean)
   }, [nodeMap])
 
   useFrame(() => {
     const p       = useStore.getState().scrollProgress
     const asm     = smoothstep(ASSEMBLE_START, ASSEMBLE_END, p)
-    const nnFade  = useStore.getState().nnFade
-    const visible = 1 - nnFade
     const signals = useStore.getState().signals
+    const focused = useStore.getState().focusedNode
 
     edgeData.forEach((ed, i) => {
-      const hasSignal   = signals.some(s => s.edgeIdx === i)
-      const baseOpacity = asm * 0.28 * visible
-      const target      = hasSignal ? Math.min(0.85, asm * 0.85) * visible : baseOpacity
-      ed.mat.opacity    = THREE.MathUtils.lerp(ed.mat.opacity, target, 0.07)
+      const hasSignal = signals.some(s => s.edgeIdx === i)
+
+      // Check if this edge is connected to the focused node
+      const isConnectedToFocus = focused && (ed.edge.from === focused || ed.edge.to === focused)
+      const isFocusActive = !!focused
+
+      let targetOpacity
+      if (isFocusActive) {
+        if (isConnectedToFocus) {
+          // Bright glow for connected edges
+          targetOpacity = asm * 0.9
+        } else {
+          // Very dim for unconnected edges
+          targetOpacity = asm * 0.06
+        }
+      } else {
+        // Normal mode: base opacity with signal boost
+        const baseOpacity = asm * 0.28
+        targetOpacity = hasSignal ? Math.min(0.85, asm * 0.85) : baseOpacity
+      }
+
+      // Signal boost even in focus mode
+      if (hasSignal && isConnectedToFocus) {
+        targetOpacity = Math.min(1.0, targetOpacity + 0.15)
+      }
+
+      ed.mat.opacity = THREE.MathUtils.lerp(ed.mat.opacity, targetOpacity, 0.07)
     })
   })
 

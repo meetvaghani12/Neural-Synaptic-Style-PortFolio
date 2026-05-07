@@ -1,7 +1,8 @@
 /**
- * Interstellar-style audio engine — Hans Zimmer / space organ aesthetic
- * Deep, slow, evolving pads. Long reverb. Pipe organ harmonics.
- * Pure Web Audio API — no files.
+ * Interstellar audio engine — Hans Zimmer organ + ticking clock aesthetic
+ * Inspired by: "Cornfield Chase", "No Time For Caution", "Stay", "Day One"
+ * Deep pipe organ pads, ticking clock pulse, massive reverb, tension swells.
+ * Pure Web Audio API — no external files.
  */
 
 let ctx          = null
@@ -9,6 +10,7 @@ let masterGain   = null
 let droneStarted = false
 let assembled    = false
 let reverbCache  = null
+let tickInterval = null
 
 function getCtx() {
   if (!ctx) {
@@ -21,8 +23,8 @@ function getCtx() {
   return ctx
 }
 
-// ── Long, lush reverb (8s tail — Interstellar-scale spaces) ─────────────────
-function getReverb(actx, duration = 8, decay = 5) {
+// ── Cathedral reverb (10s tail — massive church organ space) ────────────────
+function getReverb(actx, duration = 10, decay = 4.5) {
   if (reverbCache) return reverbCache
   const conv = actx.createConvolver()
   const rate = actx.sampleRate
@@ -31,8 +33,11 @@ function getReverb(actx, duration = 8, decay = 5) {
   for (let c = 0; c < 2; c++) {
     const ch = buf.getChannelData(c)
     for (let i = 0; i < len; i++) {
-      // Pink-ish noise impulse for smoother reverb tail
-      ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay)
+      // Colored noise impulse with early reflections + late diffusion
+      const env = Math.pow(1 - i / len, decay)
+      // Early reflections (first 800ms)
+      const early = i < rate * 0.8 ? Math.sin(i * 0.0017) * 0.4 : 0
+      ch[i] = ((Math.random() * 2 - 1) + early) * env
     }
   }
   conv.buffer   = buf
@@ -41,11 +46,16 @@ function getReverb(actx, duration = 8, decay = 5) {
   return conv
 }
 
-// ── Pipe organ voice — stack of harmonic sines (like Hammond + pipe organ) ──
+// ── Dry bus (no reverb, for tick clock) ─────────────────────────────────────
+function getDryBus() {
+  return masterGain
+}
+
+// ── Pipe organ voice — church organ harmonics (drawbar-style) ──────────────
 function createOrganVoice(actx, freq, gainVal, destination, startT, rampT = 4.0) {
-  // Harmonics: fundamental + 2nd + 3rd + slight 4th (gives organ warmth)
-  const harmonics = [1, 2, 3, 4, 6]
-  const weights   = [1.0, 0.5, 0.25, 0.12, 0.06]
+  // Church organ drawbar harmonics: 16', 8', 5⅓', 4', 2⅔', 2'
+  const harmonics = [0.5, 1, 1.5, 2, 3, 4, 6, 8]
+  const weights   = [0.7, 1.0, 0.3, 0.5, 0.2, 0.25, 0.08, 0.04]
 
   harmonics.forEach((h, i) => {
     const osc  = actx.createOscillator()
@@ -53,8 +63,8 @@ function createOrganVoice(actx, freq, gainVal, destination, startT, rampT = 4.0)
     osc.type            = 'sine'
     osc.frequency.value = freq * h
 
-    // Tiny detune per harmonic — gives it warmth / chorus
-    osc.detune.value = (i % 2 === 0 ? 1 : -1) * (i * 2.5)
+    // Slight detune per voice — chorus / warmth
+    osc.detune.value = (i % 2 === 0 ? 1 : -1) * (i * 1.8 + Math.random() * 2)
 
     gain.gain.setValueAtTime(0, startT)
     gain.gain.linearRampToValueAtTime(gainVal * weights[i], startT + rampT)
@@ -65,9 +75,72 @@ function createOrganVoice(actx, freq, gainVal, destination, startT, rampT = 4.0)
   })
 }
 
+// ── Ticking clock — the iconic Interstellar metronome ──────────────────────
+// Soft metallic tick every 1.2 seconds (like the "Mountains" scene)
+function startTickClock(actx, reverb) {
+  if (tickInterval) return
+  const dry = getDryBus()
+
+  function tick() {
+    const t = actx.currentTime
+
+    // Primary tick — short noise burst shaped like a clock mechanism
+    const bufLen = actx.sampleRate * 0.025 // 25ms
+    const buf    = actx.createBuffer(1, bufLen, actx.sampleRate)
+    const data   = buf.getChannelData(0)
+    for (let i = 0; i < bufLen; i++) {
+      const env = Math.exp(-i / (bufLen * 0.15))
+      data[i] = (Math.random() * 2 - 1) * env
+    }
+
+    const src  = actx.createBufferSource()
+    src.buffer = buf
+
+    // Bandpass filter — makes it sound metallic, clock-like
+    const filter = actx.createBiquadFilter()
+    filter.type            = 'bandpass'
+    filter.frequency.value = 3200 + Math.random() * 400
+    filter.Q.value         = 8
+
+    const tickGain = actx.createGain()
+    tickGain.gain.setValueAtTime(0.12, t)
+    tickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08)
+
+    src.connect(filter)
+    filter.connect(tickGain)
+    tickGain.connect(dry)
+
+    // Tiny reverb send for space
+    const reverbGain = actx.createGain()
+    reverbGain.gain.value = 0.03
+    tickGain.connect(reverbGain)
+    reverbGain.connect(reverb)
+
+    src.start(t)
+    src.stop(t + 0.1)
+
+    // Secondary resonance — faint sine ping (like watch spring)
+    const ping     = actx.createOscillator()
+    const pingGain = actx.createGain()
+    ping.type            = 'sine'
+    ping.frequency.value = 4200
+    pingGain.gain.setValueAtTime(0.04, t)
+    pingGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06)
+    ping.connect(pingGain)
+    pingGain.connect(dry)
+    ping.start(t)
+    ping.stop(t + 0.08)
+  }
+
+  // Tick every 1.2 seconds — the Interstellar "Mountains" tempo
+  tickInterval = setInterval(tick, 1200)
+  // First tick immediately
+  setTimeout(tick, 600)
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// AMBIENT DRONE
-// Evolving Interstellar organ pad — slow attack, breathing LFO, deep reverb
+// AMBIENT DRONE — "Cornfield Chase" organ + "Stay" sub-bass + clock
+// Deep church organ pad with breathing LFO, evolving shimmer, ticking clock
 // ─────────────────────────────────────────────────────────────────────────────
 export function startAmbientDrone() {
   if (droneStarted) return
@@ -76,31 +149,35 @@ export function startAmbientDrone() {
   const reverb = getReverb(actx)
   const t      = actx.currentTime
 
-  // Root chord: A minor — A2 (110Hz), E2 (82Hz), A1 (55Hz)
-  // Very slow fade-in over 6 seconds
+  // Start the ticking clock
+  startTickClock(actx, reverb)
+
+  // ── Deep organ pad — "Stay" chord (D minor) ──
+  // D minor = D, F, A — darker, more emotional than A minor
   const chordNotes = [
-    { freq: 55,  gain: 0.18, delay: 0.0  },  // A1 — deep sub bass
-    { freq: 82,  gain: 0.14, delay: 1.5  },  // E2 — fifth
-    { freq: 110, gain: 0.11, delay: 3.0  },  // A2 — root an octave up
-    { freq: 138, gain: 0.07, delay: 4.5  },  // C#3 — major 3rd (adds tension)
+    { freq: 36.7,  gain: 0.14, delay: 0.0 },  // D1 — 32' pedal stop (sub-bass rumble)
+    { freq: 73.4,  gain: 0.16, delay: 1.0 },  // D2 — 16' foundation
+    { freq: 87.3,  gain: 0.10, delay: 2.5 },  // F2 — minor third
+    { freq: 110,   gain: 0.12, delay: 3.5 },  // A2 — fifth
+    { freq: 146.8, gain: 0.07, delay: 5.0 },  // D3 — octave
   ]
 
   chordNotes.forEach(({ freq, gain, delay }) => {
-    createOrganVoice(actx, freq, gain, reverb, t + delay, 5.0)
+    createOrganVoice(actx, freq, gain, reverb, t + delay, 6.0)
 
-    // Slow tremolo LFO per voice
+    // Slow breathing LFO — the organ "breathes" like in Interstellar
     const lfo  = actx.createOscillator()
     const lfoG = actx.createGain()
-    lfo.frequency.value = 0.04 + Math.random() * 0.03   // ~0.04–0.07 Hz
-    lfoG.gain.value     = gain * 0.3
+    lfo.type            = 'sine'
+    lfo.frequency.value = 0.03 + Math.random() * 0.025   // ~0.03–0.055 Hz (very slow)
+    lfoG.gain.value     = gain * 0.25
     lfo.connect(lfoG)
-    // We can't easily connect to the gain ramp above — just let the
-    // organ voices breathe naturally from detune+room
     lfo.start(t + delay)
   })
 
-  // Slow high shimmer — like the Interstellar choir shimmer
-  const shimmerFreqs = [440, 554, 659, 880]
+  // ── High organ shimmer — "No Time For Caution" upper register ──
+  // Haunting octave doublings in the upper register
+  const shimmerFreqs = [293.7, 440, 587.3, 880]  // D4, A4, D5, A5
   shimmerFreqs.forEach((freq, i) => {
     const osc  = actx.createOscillator()
     const gain = actx.createGain()
@@ -109,88 +186,129 @@ export function startAmbientDrone() {
 
     osc.type            = 'sine'
     osc.frequency.value = freq
-    osc.detune.value    = i * 3
+    osc.detune.value    = (i % 2 === 0 ? 4 : -4) + Math.random() * 3
 
-    lfo.frequency.value = 0.06 + i * 0.02
-    lfoG.gain.value     = 0.012
+    // Very slow crescendo — arrives ~12s in
+    lfo.type            = 'sine'
+    lfo.frequency.value = 0.04 + i * 0.015
+    lfoG.gain.value     = 0.008
 
-    gain.gain.setValueAtTime(0, t + 6 + i)
-    gain.gain.linearRampToValueAtTime(0.025, t + 10 + i)
+    gain.gain.setValueAtTime(0, t + 8 + i * 1.5)
+    gain.gain.linearRampToValueAtTime(0.018, t + 14 + i * 1.5)
 
     lfo.connect(lfoG)
     lfoG.connect(gain.gain)
 
     osc.connect(gain)
     gain.connect(reverb)
-    osc.start(t + 6 + i)
-    lfo.start(t + 6 + i)
+    osc.start(t + 8 + i * 1.5)
+    lfo.start(t + 8 + i * 1.5)
   })
+
+  // ── Sub-bass throb — "Mountains" pressure wave ──
+  const subOsc  = actx.createOscillator()
+  const subGain = actx.createGain()
+  const subLfo  = actx.createOscillator()
+  const subLfoG = actx.createGain()
+  subOsc.type            = 'sine'
+  subOsc.frequency.value = 36.7  // D1
+  subLfo.type            = 'sine'
+  subLfo.frequency.value = 0.083 // ~12s cycle — tidal pulse
+  subLfoG.gain.value     = 0.06
+  subGain.gain.setValueAtTime(0, t + 4)
+  subGain.gain.linearRampToValueAtTime(0.10, t + 10)
+  subLfo.connect(subLfoG)
+  subLfoG.connect(subGain.gain)
+  subOsc.connect(subGain)
+  subGain.connect(masterGain) // direct to master, no reverb on sub
+  subOsc.start(t + 4)
+  subLfo.start(t + 4)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NODE HOVER — soft church bell / resonant chime
-// Long tail, very gentle, Interstellar-style single note
+// NODE HOVER — "Stay" piano-like resonant tone
+// Single struck organ pipe with bell-like decay
 // ─────────────────────────────────────────────────────────────────────────────
-// One note per layer, part of the A minor scale
-const LAYER_NOTES = { 0: 220, 1: 277, 2: 185, 3: 247, 4: 165 }
+const LAYER_NOTES = {
+  0: 293.7,  // D4
+  1: 349.2,  // F4
+  2: 220,    // A3
+  3: 261.6,  // C4
+  4: 196,    // G3
+  5: 174.6,  // F3
+}
 
 export function playNodePing(layer = 0) {
   const actx   = getCtx()
   const reverb = getReverb(actx)
   const t      = actx.currentTime
-  const freq   = LAYER_NOTES[layer] ?? 220
+  const freq   = LAYER_NOTES[layer] ?? 293.7
 
-  // Bell tone = sine + detuned copy (inharmonic partial = bell character)
-  [[freq, 0], [freq * 2.756, -8], [freq * 5.404, 6]].forEach(([f, detune], i) => {
+  // Organ pipe strike — fundamental + octave + fifth partial
+  const partials = [
+    [freq,         0.30, 0],       // Fundamental
+    [freq * 2,     0.12, 3],       // Octave
+    [freq * 3,     0.05, -5],      // 12th (octave + fifth)
+    [freq * 4,     0.03, 7],       // Double octave
+  ]
+
+  partials.forEach(([f, vol, detune]) => {
     const osc  = actx.createOscillator()
     const gain = actx.createGain()
-    const vol  = i === 0 ? 0.38 : i === 1 ? 0.14 : 0.06
-
-    osc.type        = 'sine'
+    osc.type            = 'sine'
     osc.frequency.value = f
     osc.detune.value    = detune
 
-    // Bell envelope: instant attack, slow exponential decay
-    gain.gain.setValueAtTime(vol, t)
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + (i === 0 ? 3.0 : 2.0))
+    // Soft attack (not instant — organ pipes don't click)
+    gain.gain.setValueAtTime(0, t)
+    gain.gain.linearRampToValueAtTime(vol, t + 0.08)
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 3.5)
 
     osc.connect(gain)
     gain.connect(reverb)
     osc.start(t)
-    osc.stop(t + 3.5)
+    osc.stop(t + 4.0)
   })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SIGNAL TICK — barely-there soft breath of air
-// Almost silent — just presence, like a distant pulse
+// SIGNAL TICK — distant ticking echo (matches the clock but randomized)
+// Like hearing the clock through a long corridor
 // ─────────────────────────────────────────────────────────────────────────────
 let lastTick = 0
 export function playSignalTick() {
   const now = Date.now()
-  if (now - lastTick < 280) return
+  if (now - lastTick < 350) return
   lastTick = now
 
   const actx   = getCtx()
   const reverb = getReverb(actx)
   const t      = actx.currentTime
 
+  // Pitched tick — high metallic tap
   const osc  = actx.createOscillator()
   const gain = actx.createGain()
+  const filter = actx.createBiquadFilter()
+
   osc.type            = 'sine'
-  osc.frequency.value = 1760 + Math.random() * 220
-  osc.frequency.exponentialRampToValueAtTime(880, t + 0.12)
-  gain.gain.setValueAtTime(0.025, t)
-  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18)
-  osc.connect(gain)
+  osc.frequency.value = 2800 + Math.random() * 600
+  filter.type         = 'highpass'
+  filter.frequency.value = 2000
+  filter.Q.value      = 2
+
+  gain.gain.setValueAtTime(0.018, t)
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12)
+
+  osc.connect(filter)
+  filter.connect(gain)
   gain.connect(reverb)
   osc.start(t)
-  osc.stop(t + 0.2)
+  osc.stop(t + 0.15)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NETWORK ASSEMBLY — organ chord rising up like Interstellar's "Cornfield Chase"
-// Notes appear one by one, slow and majestic
+// NETWORK ASSEMBLY — "Cornfield Chase" rising organ swell
+// Notes appear one by one, each breath deeper, building to full chord
 // ─────────────────────────────────────────────────────────────────────────────
 export function playAssemblySweep() {
   if (assembled) return
@@ -199,35 +317,56 @@ export function playAssemblySweep() {
   const reverb = getReverb(actx)
   const t      = actx.currentTime
 
-  // A minor ascending scale — each note breathes in slowly
-  const scale = [110, 123, 138, 165, 185, 220]
+  // D minor ascending — pedal notes breathing in one by one
+  const scale = [73.4, 87.3, 110, 146.8, 174.6, 220, 293.7]
   scale.forEach((freq, i) => {
-    const delay = i * 0.55
-    createOrganVoice(actx, freq, 0.11 - i * 0.008, reverb, t + delay, 2.5)
+    const delay = i * 0.65
+    createOrganVoice(actx, freq, 0.09 - i * 0.006, reverb, t + delay, 3.0)
   })
+
+  // Final sustained chord swell — the emotional peak
+  setTimeout(() => {
+    const t2 = actx.currentTime
+    ;[146.8, 220, 293.7, 440].forEach((freq, i) => {
+      createOrganVoice(actx, freq, 0.06, reverb, t2 + i * 0.12, 2.0)
+    })
+  }, scale.length * 650 + 500)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROJECT OPEN — deep resonant organ chord (like Interstellar "Day One")
-// Full warm chord: root + fifth + octave
+// PROJECT/NODE OPEN — "No Time For Caution" organ swell
+// Full dramatic chord — like the docking scene
 // ─────────────────────────────────────────────────────────────────────────────
 export function playProjectOpen() {
   const actx   = getCtx()
   const reverb = getReverb(actx)
   const t      = actx.currentTime
 
-  // A minor triad — 110, 165, 220Hz
-  [[110, 0.08], [165, 0.06], [220, 0.05], [330, 0.03]].forEach(([freq, gain], i) => {
-    const delay = i * 0.08
-    createOrganVoice(actx, freq, gain, reverb, t + delay, 1.2)
+  // D minor power chord with octave doubling
+  const chord = [
+    [73.4,  0.08],  // D2
+    [110,   0.07],  // A2 (fifth)
+    [146.8, 0.06],  // D3
+    [220,   0.05],  // A3
+    [293.7, 0.04],  // D4
+    [440,   0.02],  // A4 (high shimmer)
+  ]
 
-    // Fade out slowly after 4 seconds
-    const fadeOsc = actx.createOscillator()  // dummy to schedule gain fade
-    const fg      = actx.createGain()
-    fg.gain.setValueAtTime(gain, t + delay + 1.5)
-    fg.gain.linearRampToValueAtTime(0, t + delay + 5.0)
+  chord.forEach(([freq, gain], i) => {
+    const delay = i * 0.06
+    createOrganVoice(actx, freq, gain, reverb, t + delay, 1.0)
+
+    // Slow fade out over 5 seconds
+    const osc    = actx.createOscillator()
+    const fg     = actx.createGain()
+    osc.type            = 'sine'
+    osc.frequency.value = freq
+    fg.gain.setValueAtTime(gain * 0.3, t + delay + 1.5)
+    fg.gain.linearRampToValueAtTime(0, t + delay + 5.5)
+    osc.connect(fg)
     fg.connect(reverb)
-    fadeOsc.connect(fg)
+    osc.start(t + delay + 1.0)
+    osc.stop(t + delay + 6.0)
   })
 }
 
@@ -237,6 +376,13 @@ export function playProjectOpen() {
 export function setMasterVolume(vol) {
   const actx = getCtx()
   masterGain.gain.setTargetAtTime(vol * 0.85, actx.currentTime, 0.3)
+  // Mute/unmute clock
+  if (vol < 0.01 && tickInterval) {
+    clearInterval(tickInterval)
+    tickInterval = null
+  } else if (vol > 0.01 && !tickInterval && droneStarted) {
+    startTickClock(actx, getReverb(actx))
+  }
 }
 
 export function isMuted() {
